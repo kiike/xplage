@@ -1,0 +1,176 @@
+'\" te
+.\" Copyright (c) 2007 Chris Kern\&.
+.TH xplage 1 "29-Nov-07" "" "User Commands"
+.SH "NAME"
+xplage \- convert X-Plane datagrams to
+.SM KML
+files
+.SH "SYNOPSIS"
+.PP
+\fBxplage [-\fBlmh\fR] [-\fBf\fR \fIfeet\fR] [-\fBi\fR \fIseconds\fR] [-\fBo\fR \fIpath\fR] [ -\fBp\fR \fIport\fR] [-\fBs\fR] [-\fBt\fR] [-\fBv\fR \fIversion\fR]
+.SH "DESCRIPTION"
+.PP
+The \fBxplage\fR command listens on a network \fBsocket\fR(3\s-1SOCKET\s+1) for
+.SM UDP
+datagrams representing the geographical coordinates and orientation
+of an instance of the X-Plane\(rg flight simulator,
+and converts them to
+.SM KML
+files that Google Earth\(rg can use as network links
+to create ``moving maps'' of the simulated flight path.
+Two
+.SM KML
+files are created:
+one produces an overhead view
+of the simulated aircraft's position;
+the other produces a perspective view
+of the terrain ahead of the aircraft. 
+.SH "OPTIONS"
+.PP
+The following options are supported:
+.sp
+.ne 2
+.mk
+\fB- \fB[ l | m | h ]\fR\fR
+.in +16n
+.rt
+Set the height offset of the Google Earth ``eye''
+to a preset low (medium, high) level.
+This is added to the altitude
+of the simulated aircraft
+to determine the height
+of the overhead earth viewer.
+(The eye value is not used in the perspective view.)
+.in -16n
+.sp
+.ne 2
+.mk
+\fB-\fBf\fR \fIfeet\fR\fR
+.in +16n
+.rt
+Set the eye offset to \fIfeet\fR above the altitude
+of the simulated aircraft.
+(The \fIfeet\fR parameter should be entered as a decimal integer string,
+without commas.)
+.in -16n
+.sp
+.ne 2
+.mk
+\fB-i\fB \fIseconds\fR\fR
+.in +16n
+.rt
+Set the interval timer for file writes
+to \fIseconds\fR
+rather than the default one second.
+.in -16n
+.sp
+.ne 2
+.mk
+\fB-\fBo\fR \fIpath\fR\fR
+.in +16n
+.rt
+Use
+\fIpath\fR
+for the output
+instead of the standard document directory
+for the Apache
+.SM HTTP
+server on the target platform.
+.in -16n
+.sp
+.ne 2
+.mk
+\fB-\fBp\fR \fIport\fR\fR
+.in +16n
+.rt
+Listen for
+.SM UDP
+datagrams on \fIport\fR
+rather than the default port of 49000.
+.in -16n
+.sp
+.ne 2
+.mk
+\fB-\fBs\fR\fR
+.in +16n
+.rt
+By default, \fBxplage\fR prints data capture metrics
+and current values for the coordinates
+to its standard output stream.  This option suppresses
+the incessant chatter.
+.in -16n
+.sp
+.ne 2
+.mk
+\fB-\fBt\fR\fR
+.in +16n
+.rt
+In addition to the two
+.SM KML
+files,
+deposit a file containing comma-separated values
+representing the flight track
+in the target directory.
+.in -16n
+.sp
+.ne 2
+.mk
+\fB-\fBv \fIversion\fR\fR
+.in +16n
+.rt
+.B Xplage
+usually can determine
+which version of X-Plane is the source of the telemetry,
+and adjust its semantics accordingly.
+This option disables that automatic process
+so only datagrams from the specified \fIversion\fR
+will be detected.
+.sp
+.PP
+If \fBxplage\fR is executed in the foreground,
+a software interrupt
+(typically initiated by typing a Control-C
+in the controlling terminal)
+will prompt the user to exit \fBxplage\fR
+or enter new parameters
+for the height of the ``eye,''
+allowing it to be modified
+without killing and relaunching
+the \fBxplage\fR process.
+.SH "EXIT STATUS"
+.PP
+The \fBxplage\fR command returns a non-zero value
+to its invoking process
+if it encounters
+an input or output error.
+Otherwise it executes continuously
+until manually stopped by the user.
+.SH "FILES"
+.sp
+.ne 2
+.mk
+\fB<Apache Documents>/overhead.kml\fR
+.in +48n
+.rt
+overhead view
+.SM KML
+directives
+.in -48n
+.ne 2
+.mk
+\fB<Apache Documents>/perspective.kml\fR
+.in +48n
+.rt
+perspective view
+.SM KML
+directives
+.in -48n
+.ne 2
+.mk
+\fB<Apache Documents>/track.csv\fR
+.in +48n
+.rt
+comma-separated track data
+.SH "SEE ALSO"
+.PP
+\fBxplage\fR(4)

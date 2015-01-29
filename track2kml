@@ -1,0 +1,203 @@
+#!/bin/bash
+#
+# track2kml - convert xplage track to KML animated path
+#
+#
+# Copyright (c) 2007, 2008 Chris Kern
+#
+# This program may be distributed in accordance with the terms of Version 2 of the GNU General Public License
+# published by the Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA,
+# and is made available by the author without any warranty, including any implied warranty of merchantability
+# or fitness for a particular purpose.
+#
+# Last edit: 02-Jun-08 by CK
+#
+#
+# xplage(1) comma-separated value track data format
+#
+# Position	     1		   2		3	     4		  5	    6	     7
+# Contents	<timestamp> , <longitude> , <latitude> , <altitude> , <heading> , <roll> , <pitch>
+#
+#
+
+
+export LC_ALL=C								# POSIX locale forces dots as decimal points in $AWK
+
+FEETPERMETER=3.2808399							# conversion divisor
+SKIP=20									# default number of records to skip in animation interval
+THRESH=50								# miles threshold for inferring geographical discontinuity
+TRACKWIDTH=5								# width of displayed line path in Google Earth viewer
+
+UMSG="usage: `basename $0` file.csv"
+
+if [ -x /bin/nawk -o -x /usr/bin/nawk ]					# use nawk if available
+then
+	AWK=nawk
+else
+	AWK=awk
+fi
+
+
+
+
+function fragscan {							# scan adjacent track segments for discontinuities
+
+	$AWK 'BEGIN	{
+				FS = ","
+		}
+	
+		NR == 1	{
+				prevlon = $2; prevlat = $3; fragnum = 1
+				name = substr(INFILE, 1, length(INFILE) - 4)
+				printf("%s\n", name "-" fragnum ".csv")
+	
+				storeline()
+		}
+	
+		NR > 1  {
+				curlon = $2; curlat = $3
+	
+				if (geodist(prevlat, prevlon, curlat, curlon) > THRESH) {
+					fragnum++
+					printf("%s\n", name "-" fragnum ".csv")
+				}
+	
+				storeline()
+	
+				prevlon = curlon; prevlat = curlat
+		}	
+	
+		function geodist(lat1, lon1, lat2, lon2) {		# approximate geographical distance in statute miles
+									# http://www.meridianworlddata.com/Distance-Calculation.asp
+			x = 69.1 * (lat2 - lat1)
+			y = 69.1 * (lon2 - lon1) * cos(lat1/57.3)
+			return sqrt(x * x + y * y)
+		}
+	
+		function storeline() {					# store current line in current fragment file
+	
+				file = name "-" fragnum ".csv"
+				print $0 > file
+		}
+	
+	
+	     ' INFILE=${infile} THRESH=${THRESH} ${infile} # awk
+}
+
+
+function writepath {							# emit the KML code to display the path
+
+	echo "<kml>"
+	echo "  <Document>"
+	echo "    <Style id=\"check-hide-children\">"
+	echo "      <ListStyle>"
+	echo "        <listItemType>checkHideChildren</listItemType>"
+	echo "      </ListStyle>"
+	echo "    </Style>"
+	echo "    <styleUrl>#check-hide-children</styleUrl>"
+	echo "    <Placemark>"
+	echo "      <Style>"
+	echo "        <LineStyle>"
+	echo "          <color>ff0000ff</color>"
+	echo "          <width>${TRACKWIDTH}</width>"
+	echo "        </LineStyle>"
+	echo "      </Style>"
+	echo "      <LineString>"
+	echo "        <altitudeMode>absolute</altitudeMode>"
+	echo "        <coordinates>"
+	
+	$AWK 'BEGIN	{ FS = "," }
+			{ printf("          %s,%s,%s\n", $2, $3, $4/FEETPERMETER) }
+	     ' FEETPERMETER=${FEETPERMETER} ${fragfile} # awk
+	
+	echo "        </coordinates>"
+	echo "      </LineString>"
+	echo "    </Placemark>"
+}
+
+
+function writeanim {							# emit the KML code to animate the path
+
+	echo "    <Style id=\"sn_icon56\">"
+	echo "      <IconStyle>"
+	echo "        <Icon>"
+	echo "          <href>http://maps.google.com/mapfiles/kml/pal2/icon56.png</href>"
+	echo "        </Icon>"
+	echo "        <color>ff0000ff</color>"
+	echo "      </IconStyle>"
+	echo "    </Style>"
+	
+	$AWK 'BEGIN		{ FS = "," }
+	
+	      NR % skip == 0	{
+					printf("    <Placemark>\n")
+					printf("      <Style>\n")
+					printf("        <IconStyle>\n")
+					printf("          <heading>%s</heading>\n", $5)
+					printf("        </IconStyle>\n")
+					printf("      </Style>\n")
+					printf("      <TimeStamp>\n")
+					printf("        <when>%s</when>\n", $1)
+					printf("      </TimeStamp>\n")
+					printf("      <styleUrl>#sn_icon56</styleUrl>\n")
+					printf("      <Point>\n")
+					printf("        <altitudeMode>absolute</altitudeMode>\n")
+					printf("        <coordinates>%s,%s,%s</coordinates>\n", $2, $3, $4/FEETPERMETER)
+					printf("      </Point>\n")
+					printf("    </Placemark>\n")
+				}
+	
+	     ' FEETPERMETER=${FEETPERMETER} skip=${skip} ${fragfile} # awk
+	
+	echo "  </Document>"
+	echo "</kml>"
+}
+
+
+
+
+# processing begins here
+
+skip=$SKIP
+
+while getopts s: arg
+do
+	case $arg in
+		s)	skip=${OPTARG}
+			shift
+			;;
+		\?)	echo "${UMSG}" 2>&1 && exit 1
+	esac
+done
+
+if [ $# -ne 1 ]
+then
+	echo "${UMSG}" 2>&1 && exit 1
+
+elif [ ! -r $1 ]
+then
+	echo "`basename $0`: input file $1 not found" 2>&1 && exit 1
+fi
+
+infile=$1
+typeset -i count
+
+for fragfile in $(fragscan)						# break track into geographic fragments, if necessary
+do
+	let count=count+1
+
+	kmlfile="${infile%.csv}-${count}.kml"
+	kmls="${kmls} ${kmlfile}"
+	
+	writepath >$kmlfile						# first pass: create the path
+	writeanim >>$kmlfile						# second pass: add the animation
+
+	rm $fragfile
+done
+
+if [ $count -gt 1 ]
+then
+	echo "`basename $0`: processed ${count} fragments: ${kmls}"
+else
+	mv $kmlfile "${infile%.csv}.kml"
+fi

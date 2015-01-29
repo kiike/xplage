@@ -1,0 +1,88 @@
+'\" te
+.\" Copyright (c) 2007 Chris Kern\&.
+.TH xplage 4 "11-Nov-07" "" "User Commands"
+.SH "NAME"
+xplage \- aircraft simulation track file format
+.SH "SYNOPSIS"
+.PP
+\fB<Apache Documents>/track.csv\fR
+.PP
+.SH "DESCRIPTION"
+This file contains lines of track information representing
+geographical and orientation data transmitted
+by an instance of the X-Plane\(rg flight simulator
+and captured by the \fBxplage\fR(1) ``moving map'' generator.
+.PP
+Each line in the file represents a single data capture interval,
+and is composed of the following comma-delimited fields:
+.sp
+.ne 2
+.mk
+\fBtime\fR
+.in +12n
+.rt
+time of sample in
+.SM XML
+dateTime
+format
+.in -12n
+.ne 2
+.mk
+\fBlongitude\fR
+.in +12n
+.rt
+floating point value represented as string with six-decimal-digit precision
+.in -12n
+.ne 2
+.mk
+\fBlatitude\fR
+.in +12n
+.rt
+floating point value represented as string with six-decimal-digit precision
+.in -12n
+.ne 2
+.mk
+\fBaltitude\fR
+.in +12n
+.rt
+floating point value represented as string with six-decimal-digit precision
+.in -12n
+.ne 2
+.mk
+\fBheading\fR
+.in +12n
+.rt
+floating point value represented as string with six-decimal-digit precision
+.in -12n
+.ne 2
+.mk
+\fBroll\fR
+.in +12n
+.rt
+floating point value represented as string with six-decimal-digit precision
+.in -12n
+.ne 2
+.mk
+\fBpitch\fR
+.in +12n
+.rt
+floating point value represented as string with six-decimal-digit precision
+.in -12n
+.sp
+By default, the track file is deposited
+by the \fBxplage\fR process
+in the standard document directory
+for the Apache
+.SM HTTP
+server
+on the target platform.
+.SH "FILES"
+.ne 2
+.mk
+\fB<Apache Documents>/track.csv\fR
+.in +32n
+.rt
+comma-separated track data
+.in -32n
+.SH "SEE ALSO"
+\fBxplage\fR(1)

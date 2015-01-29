@@ -1,0 +1,6 @@
+#!/bin/bash
+
+SOLARISKML=/var/apache/htdocs/xp2ge/
+NTKML="C:/Program Files/Apache Software Foundation/Apache2.2/htdocs/xp2ge/"
+
+sed -e "s!$SOLARISKML!$NTKML!" xplage.c

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+SOLARISKML=/var/apache/htdocs/xp2ge/
+OSXKML=/Library/WebServer/Documents/xp2ge/
+
+sed -e "s!$SOLARISKML!$OSXKML!" xplage.c

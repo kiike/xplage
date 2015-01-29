@@ -1,0 +1,7 @@
+#!/bin/bash
+
+SOLARISKML=/var/apache/htdocs/xp2ge/
+LINUXKML=/var/www/xp2ge/
+
+sed -e  "s!$SOLARISKML!$LINUXKML!"\
+	-e "s!restrict *!!" xplage.c

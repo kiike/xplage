@@ -1,0 +1,68 @@
+'\" te
+.\" Copyright (c) 2007 Chris Kern\&.
+.TH track2kml 1 "11-Nov-07" "" "User Commands"
+.SH "NAME"
+track2kml \- convert xplage track data to
+.SM KML
+path
+.SH "SYNOPSIS"
+.PP
+\fBtrack2kml\fR [-\fBs\fR \fIrecords\fR\fB]\fR \fIfile\fR.csv
+.SH "DESCRIPTION"
+.PP
+The \fBtrack2kml\fR command reads a file
+produced by \fBxplage\fR(1)
+representing the track of one or more
+simulated flights of the X-Plane\(rg flight simulator,
+and converts the data
+into one or more
+.SM KML
+files that Google Earth\(rg can use
+to display the simulator's flight path
+as a three-dimensional animation.
+The output file(s) are deposited
+in the directory from which the imput file was read.
+.PP
+.SH "OPTIONS"
+.PP
+The following option is supported:
+.sp
+.ne 2
+.mk
+\fB-\fBs\fR \fIcount\fR\fR
+.in +12n
+.rt
+By default, \fBtrack2kml\fR
+only processes one of every 20 track points
+emitted by \fBxplage\fR.
+This option may be used to set the skip interval to \fIcount\fR
+rather than the default.
+(Note that if the \fBxplage\fR data capture interval
+is set to once per second,
+the skip interval may be thought of
+as the number of seconds
+between points on the simulated flight path.)
+.SH "FILES"
+.sp
+.ne 2
+.mk
+\fB<Apache Documents>/\fIfile\fR\fB.csv\fR
+.in +36n
+.rt
+input file of comma-separated values
+produced by \fBxplage\fR 
+.in -36n
+.sp
+.ne 2
+.mk
+\fB<Apache Documents>/\fIfile\fR\fB[-1...N].kml\fR
+.in +36n
+.rt
+output file(s) containing
+.SM KML
+directives
+.in -36n
+.SH "SEE ALSO"
+.PP
+\fBxplage\fR(1),
+\fBxplage\fR(4)

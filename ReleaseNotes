@@ -1,0 +1,69 @@
+Release Notes for xplage.c
+
+
+2007-03-28
+  Initial Release
+
+2007-04-09 (2007-03-20-bugfix release)
+  Fixed bug in updating Google Earth "eye" during user interrupt
+
+2007-04-10
+  POSIX threads implementation
+  Minor code clean-up
+  Minor comment clarifications
+
+2007-04-12
+  Updated Makefile and included build utilities for FreeBSD and Linux
+
+2007-04-22
+  Fixed bug in processing request to change "eye" during user interrupt
+  Added check for user-specified output directory rather than file
+  Added strlcat.c source and modified Makefile for Linux target
+  Added Makefile target and build utility for Windows NT
+  Streamlined build utilities for FreeeBSD, Linux and Windows NT
+
+2007-04-24
+  Added Makefile target and build utility for OS X
+
+2007-05-03
+  Added closedir() if first opendir() succeeds
+
+2007-08-30
+  Migrated to KML 2.2B <Camera> directive to set Google Earth "eye" height
+  Delete man page reference to Google Earth "eye" height error
+
+2007-09-13
+  Added support for perspective view
+  Changed default update interval to one second
+  Modified -o option documentation to reflect a directory target
+
+2007-09-15
+  Updated Makefile helper scripts to reflect directory targets
+
+2007-09-19
+  Added attempt to create directory target if it doesn't already exist
+
+2007-11-11
+  Added track output support and -t switch
+  Added track2kml utility
+  Modified Makefile to build "universal" OS X binary
+  Revised and expanded ReadMe file
+
+2007-11-29
+  Added support for UDP datagrams with little-endian ints and floats
+  Added automatic X-Plane version detection
+  Added -v option for manual X-Plane version detection
+  Made standard output stream display more terse
+
+2007-11-13
+  Improved handling of pathological command lines
+
+2008-06-02
+  Fixed feet-instead-of-meters bug in track2kml script
+  Imposed POSIX locale in track2kml to force dots as decimal points
+
+2011-12-02
+  Added support for X-Plane Version 10
+  Eliminated support for building BSD binaries
+  Modified linux-mk script since Linux gcc is now hostile to restrict keyword
+  Modifield Makefile section for Linux
