@@ -1,4 +1,5 @@
 /*
+	Copyright (c) 2015 Enric Morales
 	Copyright (c) 2011 Chris Kern
 
 	This program may be distributed in accordance with the terms of Version 2 of the GNU General Public License
@@ -6,10 +7,6 @@
 	and is made available by the author without any warranty, including any implied warranty of merchantability
 	or fitness for a particular purpose.
 */
-
-
-static const char id[] = "Last edit: 02-Dec-11 by CK";
-
 
 #include <stdio.h>
 #include <unistd.h>
@@ -68,10 +65,9 @@ static const char id[] = "Last edit: 02-Dec-11 by CK";
 #define SRCPORT		    49000						/* UDP port to listen on */
 #define WRITINT			1						/* file write interval in seconds */
 
-#define XP2GE			"/var/apache/htdocs/xp2ge/"			/* default directory for KML output files */
-#define OVERHEAD		"overhead.kml"					/* overhead view filename */
-#define PERSPECTIVE		"perspective.kml"				/* perspective view filename */
-#define TRACK			"track.csv"					/* track data filename */
+#define XP2GE			"." 						/* default directory for KML output files */
+#define OVERHEAD		"position.geojson"				/* overhead view filename */
+#define TRACK			"track.geojson"					/* track data filename */
 
 
 /* internal prototypes */
@@ -81,7 +77,7 @@ static int intsanity(unsigned char *, unsigned int);				/* index integer plausib
 static void deserialize(int, void *restrict, unsigned char *);			/* capture 32-bit network datum */
 
 static void *tprocoutfiles(void *);						/* output file processing thread */
-static void writekml(void);							/* write KML files for Google Earth */
+static void writegeojson(void);							/* write KML files for Google Earth */
 static void writetrack(void);							/* write track information for post-processing */
 
 static void *tprocinterrupt(void *);						/* interrupt processing thread */
@@ -127,7 +123,7 @@ int main(int argc, char *argv[])						/* collect X-Plane datagrams and emit KML 
 	(void) strcpy(dirpath, XP2GE);
 	(void) strcpy(prog, basename(argv[0]));
 
-	while ((c = getopt(argc, argv, ":f:hlmi:o:p:rstv:")) != -1) {
+	while ((c = getopt(argc, argv, ":f:hlmi:o:p:stxv:")) != -1) {
 
 		switch(c) {
 		case 'f':
@@ -155,16 +151,13 @@ int main(int argc, char *argv[])						/* collect X-Plane datagrams and emit KML 
 		case 'p':
 			(void) sscanf(optarg, "%u", &port);			/* -p: port to listen on */
 			break;
-		case 'r':
-			(void) fprintf(stderr, "%s: %s\n", prog, id);		/* -r: report version and exit (undocumented) */
-			exit(0);
 		case 's':
 			silent = TRUE;						/* -s: suppress chatter to standard output */
 			break;
 		case 't':
 			track = TRUE;						/* -t: emit track data */
 			break;
-		case 'v':							/* -v: set X-Plane version */
+		case 'x':							/* -x: set X-Plane version */
 			(void) sscanf(optarg, "%d", &xpver);
 			testxpver = FALSE;
 			break;
@@ -212,7 +205,6 @@ int main(int argc, char *argv[])						/* collect X-Plane datagrams and emit KML 
 	(void) strcpy(opath, dirpath);
 	(void) strlcat(opath, OVERHEAD, sizeof(opath));
 	(void) strcpy(vpath, dirpath);
-	(void) strlcat(vpath, PERSPECTIVE, sizeof(vpath));
 	(void) strcpy(tpath, dirpath);
 	(void) strlcat(tpath, TRACK, sizeof(tpath));
 
@@ -379,7 +371,7 @@ static void *tprocoutfiles(void *threadid)					/* output files at specified inte
 				}
 			}
 			else {
-				writekml();
+				writegeojson();
 				if (track == TRUE)
 					writetrack();
 			}
@@ -405,7 +397,7 @@ static void *tprocoutfiles(void *threadid)					/* output files at specified inte
 
 
 
-static void writekml(void)							/* emit KML file updates from global variables */
+static void writegeojson(void)							/* emit KML file updates from global variables */
 {
 	FILE *fp;
 
@@ -414,59 +406,17 @@ static void writekml(void)							/* emit KML file updates from global variables 
 		exit(1);
 	}
 	else {
-		(void) fprintf(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-		(void) fprintf(fp, "<kml xmlns=\"http://earth.google.com/kml/2.2\">\n");
-		(void) fprintf(fp, "<Document>\n");
-		(void) fprintf(fp, "\t<Style id=\"sn_icon56\">\n");
-		(void) fprintf(fp, "\t\t<IconStyle>\n");
-		(void) fprintf(fp, "\t\t\t<Icon>\n");
-		(void) fprintf(fp, "\t\t\t\t<href>http://maps.google.com/mapfiles/kml/pal2/icon56.png</href>\n");
-		(void) fprintf(fp, "\t\t\t</Icon>\n");
-		(void) fprintf(fp, "\t\t</IconStyle>\n");
-		(void) fprintf(fp, "\t</Style>\n");
-		(void) fprintf(fp, "\t<Camera>\n");
-		(void) fprintf(fp, "\t\t<longitude>%f</longitude>\n", lon);
-		(void) fprintf(fp, "\t\t<latitude>%f</latitude>\n", lat);
-		(void) fprintf(fp, "\t\t<altitude>%f</altitude>\n", eye);
-		(void) fprintf(fp, "\t</Camera>\n");
-		(void) fprintf(fp, "\t<Placemark>\n");
-		(void) fprintf(fp, "\t\t<Style>\n");
-		(void) fprintf(fp, "\t\t\t<IconStyle>\n");
-		(void) fprintf(fp, "\t\t\t\t<color>%s</color>\n", ICONCOLOR);	/* format: aabbggrr */
-		(void) fprintf(fp, "\t\t\t\t<heading>%03.0f</heading>\n", hdg);	/* format: NNN */
-		(void) fprintf(fp, "\t\t\t</IconStyle>\n");
-		(void) fprintf(fp, "\t\t</Style>\n");
-		(void) fprintf(fp, "\t\t<styleUrl>#sn_icon56</styleUrl>\n");
-		(void) fprintf(fp, "\t\t<Point>\n");
-		(void) fprintf(fp, "\t\t\t<coordinates>%f,%f,%.0f</coordinates>\n", lon, lat, alt/FEETPERMETER);
-		(void) fprintf(fp, "\t\t</Point>\n");
-		(void) fprintf(fp, "\t</Placemark>\n");
-		(void) fprintf(fp, "</Document>\n");
-		(void) fprintf(fp, "</kml>\n");
+		(void) fprintf(fp, "{\n");
+		(void) fprintf(fp, "\t\"type\": \"Feature\",\n");
+		(void) fprintf(fp, "\t\"properties\": {},\n");
+		(void) fprintf(fp, "\t\"geometry\": {\n");
+		(void) fprintf(fp, "\t\t\"type\": \"Point\",\n");
+		(void) fprintf(fp, "\t\t\"coordinates\": [%f, %f]\n", lon, lat);
+		(void) fprintf(fp, "\t}\n");
+		(void) fprintf(fp, "}\n");
 		(void) fclose(fp);
 	}
 
-	if ((fp = fopen(vpath, "w")) == NULL) {					/* perspective view file */
-		(void) fprintf(stderr, "%s: can't open %s\n", prog, vpath);
-		exit(1);
-	}
-	else {
-		(void) fprintf(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-		(void) fprintf(fp, "<kml xmlns=\"http://earth.google.com/kml/2.2\">\n");
-		(void) fprintf(fp, "<Document>\n");
-		(void) fprintf(fp, "\t<Camera>\n");
-		(void) fprintf(fp, "\t\t<altitudeMode>absolute</altitudeMode>\n");
-		(void) fprintf(fp, "\t\t<longitude>%f</longitude>\n", lon);
-		(void) fprintf(fp, "\t\t<latitude>%f</latitude>\n", lat);
-		(void) fprintf(fp, "\t\t<altitude>%f</altitude>\n", alt/FEETPERMETER);
-		(void) fprintf(fp, "\t\t<heading>%f</heading>\n", hdg);
-		(void) fprintf(fp, "\t\t<roll>%f</roll>\n", -1 * roll);		/* invert aircraft roll to produce camera roll */
-		(void) fprintf(fp, "\t\t<tilt>%f</tilt>\n", TILT + pitch);	/* point viewer slightly downwards */
-		(void) fprintf(fp, "\t</Camera>\n");
-		(void) fprintf(fp, "</Document>\n");
-		(void) fprintf(fp, "</kml>\n");
-		(void) fclose(fp);
-	}
 }
 
 
